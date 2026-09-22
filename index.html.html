@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paise Bachao Store — Best Offers, Loot Deals &amp; Discounts</title>
+<meta name="description" content="Amazon aur online stores ke best loot deals, discount offers aur coupons — ek jagah, hamesha latest.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%B0%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Hind:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#141a2e; --ink-soft:#4a5170; --paper:#eef0f6; --card:#ffffff; --line:#dfe2ec;
+    --trust:#18306b; --trust-deep:#0e1f4d;
+    --deal:#ff4433; --deal-deep:#d92e1f; --spark:#ffb100; --ok:#158a4d;
+    --radius:14px; --shadow:0 10px 28px -14px rgba(20,26,46,.28);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Hind',sans-serif;font-size:16px;line-height:1.5;}
+  h1,h2,h3,.brand,.stat-num{font-family:'Baloo 2',sans-serif;}
+  a{color:inherit;text-decoration:none;}
+  img{max-width:100%;display:block;}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px;}
+
+  header{position:sticky;top:0;z-index:40;background:var(--trust);color:#fff;box-shadow:0 4px 18px -6px rgba(14,31,77,.45);}
+  .header-row{display:flex;align-items:center;gap:18px;padding:14px 20px;max-width:1180px;margin:0 auto;}
+  .brand{font-weight:800;font-size:1.4rem;color:#fff;display:flex;align-items:baseline;gap:6px;white-space:nowrap;}
+  .brand small{font-family:'Hind',sans-serif;font-weight:500;font-size:.6rem;opacity:.72;letter-spacing:.02em;}
+  .search-box{flex:1;display:flex;align-items:center;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:8px 16px;gap:8px;max-width:520px;}
+  .search-box input{background:transparent;border:0;outline:0;color:#fff;font-family:'Hind',sans-serif;font-size:.95rem;width:100%;}
+  .search-box input::placeholder{color:rgba(255,255,255,.6);}
+  .search-box svg{flex:none;opacity:.75;}
+
+  .pill-row{display:flex;gap:8px;overflow-x:auto;padding:0 20px 14px;max-width:1180px;margin:0 auto;scrollbar-width:thin;}
+  .pill-row::-webkit-scrollbar{height:5px;}
+  .pill{flex:none;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);color:#fff;padding:7px 16px;border-radius:999px;font-size:.86rem;font-weight:600;cursor:pointer;transition:.15s ease;white-space:nowrap;}
+  .pill:hover{background:rgba(255,255,255,.2);}
+  .pill.active{background:var(--spark);border-color:var(--spark);color:#2b1c00;}
+
+  .hero{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--trust) 0%,var(--trust-deep) 62%);color:#fff;padding:52px 0 40px;}
+  .hero::after{content:"%";position:absolute;right:-40px;top:-70px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:340px;line-height:1;color:rgba(255,255,255,.05);pointer-events:none;}
+  .hero-inner{position:relative;z-index:1;}
+  .hero h1{font-size:2.5rem;font-weight:800;margin:0 0 10px;max-width:640px;line-height:1.15;}
+  .hero p{margin:0 0 26px;color:rgba(255,255,255,.82);font-size:1.05rem;max-width:560px;}
+  .stat-row{display:flex;gap:28px;flex-wrap:wrap;}
+  .stat-num{font-size:2rem;font-weight:700;color:var(--spark);}
+  .stat-label{font-size:.82rem;color:rgba(255,255,255,.72);}
+
+  main{padding:34px 0 60px;}
+  .section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+  .section-head h2{font-size:1.35rem;margin:0;}
+  .result-count{font-size:.88rem;color:var(--ink-soft);}
+
+  .status{text-align:center;padding:60px 20px;color:var(--ink-soft);}
+  .status button{margin-top:14px;background:var(--trust);color:#fff;border:0;padding:10px 22px;border-radius:999px;font-weight:600;cursor:pointer;font-size:.9rem;}
+  .status a.btn2{display:inline-block;margin-top:14px;margin-left:8px;background:var(--deal);color:#fff;padding:10px 22px;border-radius:999px;font-weight:600;font-size:.9rem;}
+
+  .grid{display:grid;gap:20px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));}
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;border:1px solid var(--line);transition:transform .15s ease,box-shadow .15s ease;position:relative;}
+  .card:hover{transform:translateY(-3px);box-shadow:0 16px 30px -14px rgba(20,26,46,.38);}
+
+  /* image slider */
+  .card-media{position:relative;aspect-ratio:1/1;background:#f4f5f9;clip-path:polygon(0 0,calc(100% - 26px) 0,100% 26px,100% 100%,0 100%);overflow:hidden;}
+  .slider-track{display:flex;height:100%;transition:transform .25s ease;}
+  .slider-track img{width:100%;height:100%;object-fit:cover;flex:none;}
+  .slider-arrow{position:absolute;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;background:rgba(20,26,46,.55);color:#fff;border:0;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.8rem;z-index:2;}
+  .slider-arrow.prev{left:8px;} .slider-arrow.next{right:8px;}
+  .slider-dots{position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:4px;z-index:2;}
+  .slider-dots span{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.55);}
+  .slider-dots span.active{background:#fff;width:14px;border-radius:3px;}
+
+  .badge-off{position:absolute;top:10px;left:0;background:var(--deal);color:#fff;font-weight:700;font-size:.78rem;padding:5px 12px 5px 10px;border-radius:0 6px 6px 0;box-shadow:0 3px 8px -2px rgba(217,46,31,.5);z-index:2;}
+  .card-cat{position:absolute;bottom:10px;left:10px;background:rgba(20,26,46,.7);color:#fff;font-size:.68rem;font-weight:600;padding:3px 10px;border-radius:999px;z-index:2;}
+  .card-body{padding:14px 14px 16px;display:flex;flex-direction:column;gap:8px;flex:1;}
+  .card-title{font-size:.93rem;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em;}
+  .card-desc{font-size:.78rem;color:var(--ink-soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2em;}
+  .card-price-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+  .price-mrp{font-size:.82rem;color:var(--ink-soft);text-decoration:line-through;}
+  .price-now{font-size:1.18rem;font-weight:700;color:var(--ok);}
+  .price-pct{font-size:.74rem;font-weight:700;color:var(--deal-deep);}
+  .card-cta{margin-top:auto;background:var(--deal);color:#fff;text-align:center;padding:10px;border-radius:9px;font-weight:700;font-size:.88rem;transition:background .15s ease;}
+  .card-cta:hover{background:var(--deal-deep);}
+  .card-date{font-size:.7rem;color:var(--ink-soft);}
+
+  .setup-banner{background:#fff7e0;border:1px solid #ffdd8a;color:#6b4c00;padding:12px 16px;border-radius:10px;font-size:.85rem;margin-bottom:20px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;}
+  .setup-banner button{background:var(--trust);color:#fff;border:0;padding:7px 14px;border-radius:7px;font-weight:600;font-size:.8rem;cursor:pointer;}
+
+  .load-more-wrap{text-align:center;margin-top:32px;}
+  .load-more{background:var(--trust);color:#fff;border:0;padding:12px 30px;border-radius:999px;font-weight:700;font-size:.92rem;cursor:pointer;box-shadow:0 8px 18px -8px rgba(24,48,107,.5);}
+  .load-more:hover{background:var(--trust-deep);}
+
+  .empty{text-align:center;padding:60px 20px;color:var(--ink-soft);}
+
+  footer{background:var(--ink);color:rgba(255,255,255,.75);padding:34px 0 22px;margin-top:20px;font-size:.85rem;}
+  .footer-row{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;}
+  .footer-brand{color:#fff;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:1.1rem;margin-bottom:6px;}
+  .disclosure{border-top:1px solid rgba(255,255,255,.12);margin-top:22px;padding-top:16px;font-size:.76rem;color:rgba(255,255,255,.5);line-height:1.6;}
+
+  @media(max-width:640px){
+    .hero h1{font-size:1.8rem;}
+    .search-box{max-width:none;width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-row">
+    <a class="brand" href="#top">💰 Paise Bachao <small>STORE</small></a>
+    <div class="search-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="searchInput" type="text" placeholder="Deal, brand ya product khoje...">
+    </div>
+  </div>
+  <nav class="pill-row" id="pillRow">
+    <button class="pill active" data-cat="all">Sabhi Deals</button>
+  </nav>
+</header>
+
+<section class="hero" id="top">
+  <div class="wrap hero-inner">
+    <h1>Aaj ke sabse bade Loot Deals, ek hi jagah</h1>
+    <p>Amazon aur online stores ke best offers, discounts aur coupon deals — curated aur hamesha up to date.</p>
+    <div class="stat-row">
+      <div><div class="stat-num" id="statTotal">–</div><div class="stat-label">Live Deals</div></div>
+      <div><div class="stat-num" id="statCats">–</div><div class="stat-label">Categories</div></div>
+      <div><div class="stat-num">100%</div><div class="stat-label">Free to Browse</div></div>
+    </div>
+  </div>
+</section>
+
+<main class="wrap">
+  <div class="section-head">
+    <h2 id="sectionTitle">Latest Deals</h2>
+    <span class="result-count" id="resultCount"></span>
+  </div>
+
+  <div id="setupBanner" class="setup-banner" style="display:none;"></div>
+  <div id="statusBox" class="status">Deals load ho rahi hain...</div>
+  <div id="grid" class="grid" style="display:none;"></div>
+  <div id="emptyBox" class="empty" style="display:none;">Is category/search ke liye koi deal nahi mila.</div>
+
+  <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
+    <button class="load-more" id="loadMoreBtn">Aur Deals Dikhaye</button>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-row">
+      <div>
+        <div class="footer-brand">Paise Bachao Store</div>
+        <div>Best loot deals &amp; discount offers, curated daily.</div>
+      </div>
+    </div>
+    <div class="disclosure">
+      Affiliate Disclosure: Paise Bachao Store ek participant hai Amazon aur anya affiliate programs mein. Is site par diye gaye kuch links affiliate links hain — inke through qualifying purchase karne par humein ek chhota commission mil sakta hai, jiski aapko koi extra keemat nahi deni padti. Saari deals aur prices concerned platform par jaake hi confirm karein, kyunki ye samay ke saath badal sakti hain.
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  // =========================================================
+  // CONFIG — sabse zyada change yahin karni padegi
+  // =========================================================
+  var BLOG_URL   = 'https://paisebachaostore.blogspot.com'; // aapka Blogger blog (import ke liye)
+  var PAGE_SIZE  = 12;     // ek baar mein kitne cards dikhein
+
+  // IndexedDB helper (admin.html jaisa hi) — taaki dono files ka data ek jagah rahe
+  var DB_NAME = 'pbs_db', DB_VERSION = 1, STORE = 'posts';
+  function openDB(){
+    return new Promise(function(resolve, reject){
+      var req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = function(){ req.result.createObjectStore(STORE, {keyPath:'id'}); };
+      req.onsuccess = function(){ resolve(req.result); };
+      req.onerror = function(){ reject(req.error); };
+    });
+  }
+  function dbGetAll(){
+    return openDB().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction(STORE,'readonly');
+        var req = tx.objectStore(STORE).getAll();
+        req.onsuccess = function(){ resolve(req.result || []); };
+        req.onerror = function(){ reject(req.error); };
+      });
+    });
+  }
+  function dbBulkPut(posts){
+    return openDB().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction(STORE,'readwrite');
+        var store = tx.objectStore(STORE);
+        posts.forEach(function(p){ store.put(p); });
+        tx.oncomplete = function(){ resolve(); };
+        tx.onerror = function(){ reject(tx.error); };
+      });
+    });
+  }
+
+  var SEED = [
+    {
+      id:"deelmo-overshirt",
+      title:"DEELMO Men Solid Slim Fit Casual Overshirt – Full Sleeve Button-Down Layering Shirt",
+      images:["https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgUj3P8KMVqJTczkwLdiQT32yqqGks8d2smaox9U-p-VBPzBkGJnIbBSb-iRIeJ6O4yQUEqsxbBLcWj1K4Z7WIbwdMkw8Jf160DPswM6qtI1u4KT0xlmE0Zccc91hJm8ORi0J7uEdtcLSIBRf6oY96kHvl3nzijZWWRDMHal5Nnk9S894tsHq6Fp2HxzMiP/s1024/img.png"],
+      buyLink:"https://link.amazon/B0edEqlkc",
+      price:"₹489", sale:"76% Off", category:"Fashion",
+      description:"Solid overshirt-style casual shirt, slim fit, full sleeves — smart-casual aur layering ke liye perfect.",
+      date:"2026-09-14"
+    },
+    {
+      id:"hit-mosquito-racquet",
+      title:"HIT Anti Mosquito Racquet Rechargeable Insect Killer Bat with LED Light",
+      image:"https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj9WzjCcEFPGQwhP-LttKXSY6qFj2mA1Ph49D9z-J3gvrOrqBO_r8sHlJei_Gy9ilfo0w8fpng9ccXYSTeweztB6jWitM4EfRIbW6R11OdMEQ2UETY7Jd6sIjqHmCPWpWTgSnWyPQ8Qhsby9w-wQV0Wu6sLAJDWpnkU2BtQMaaWC3VP078wuh9GxIlm6INF/s640/img.png",
+      buyLink:"https://link.amazon/B07EiGB2m",
+      price:"₹457", sale:"8% Off", category:"Home",
+      description:"Rechargeable electric mosquito killer racquet with built-in LED light for extra visibility.",
+      date:"2026-09-08"
+    },
+    {
+      id:"raxon-door-guard",
+      title:"Raxon Innovation 39-Inch PVC Door Guard Gap Filler – Pack of 5",
+      image:"https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgSv2RSj6YUD15Acr9supx3px4UgwaUDZBQUlxRQ1_XIF57X3_qCXi5_0zV3TGzRlklV3pUrjRIX3aC7NoYUMIQi4m3zzwtkeoGDMjAlhXkpFXnpQ4iQ9HD0V-2LQsaCjsNFcBbD0aw742qmZSX9U2UbKnkmHAX6L3rhyAqam51kR8Xqm1ziGB1qfWQYfzx/s640/img.png",
+      buyLink:"https://link.amazon/B0gy4XCbQ",
+      price:"₹189", sale:"73% Off", category:"Home",
+      description:"Pack of 5 PVC door guard strips to reduce dust and noise from door gaps.",
+      date:"2026-09-08"
+    }
+  ];
+
+  var state = { all:[], filtered:[], shown:0, activeCat:'all', query:'' };
+
+  var grid = document.getElementById('grid');
+  var statusBox = document.getElementById('statusBox');
+  var emptyBox = document.getElementById('emptyBox');
+  var loadMoreWrap = document.getElementById('loadMoreWrap');
+  var loadMoreBtn = document.getElementById('loadMoreBtn');
+  var pillRow = document.getElementById('pillRow');
+  var resultCount = document.getElementById('resultCount');
+  var searchInput = document.getElementById('searchInput');
+
+  function escapeHtml(s){
+    return (s||"").replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  function formatDate(iso){
+    if(!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d)) return "";
+    return d.toLocaleDateString('hi-IN', {day:'numeric', month:'short', year:'numeric'});
+  }
+
+  function loadPosts(){
+    // 1) Agar posts.json file hosting par maujood hai (setup complete), wahi use karo — sabse fast & sabke liye same.
+    fetch('posts.json', {cache:'no-store'})
+      .then(function(r){ if(!r.ok) throw new Error('no posts.json'); return r.json(); })
+      .then(function(data){ initWith(Array.isArray(data) ? data : [], false); })
+      .catch(function(){
+        // 2) Nahi mili to is browser ki localStorage mein pehle se import kiya hua data check karo.
+        try{
+          var raw = localStorage.getItem(STORAGE_KEY);
+          var local = raw ? JSON.parse(raw) : [];
+          if (local.length){ initWith(local, false); return; }
+        }catch(e){}
+        // 3) Pehli baar khula hai — Blogger se khud-ba-khud saare posts import kar lo.
+        autoImportFromBlogger();
+      });
+  }
+
+  function initWith(posts, justImported){
+    posts.sort(function(a,b){ return new Date(b.date||0) - new Date(a.date||0); });
+    state.all = posts;
+    statusBox.style.display = 'none';
+
+    if (!posts.length){
+      statusBox.style.display = 'block';
+      statusBox.innerHTML = 'Abhi koi deal nahi mili. Blog se import nahi ho paaya — "admin.html" kholkar dobara try karein.';
+      return;
+    }
+
+    document.getElementById('statTotal').textContent = posts.length + '+';
+    buildPills();
+    applyFilters();
+
+    if (justImported) showSetupBanner(posts.length);
+  }
+
+  function showSetupBanner(count){
+    var banner = document.getElementById('setupBanner');
+    banner.style.display = 'flex';
+    banner.innerHTML =
+      '<span>✅ Setup complete! Blogger se <b>' + count + ' posts</b> import ho gaye hain aur <b>posts.json</b> download ho chuki hai. Isse apni hosting par is index.html ke <u>saath</u> upload/replace kar dein — uske baad blog delete kar sakte hain.</span>' +
+      '<button id="dismissBanner">Samajh gaya</button>';
+    document.getElementById('dismissBanner').addEventListener('click', function(){ banner.style.display = 'none'; });
+  }
+
+  // ---------- one-time automatic import (runs only if no posts.json / localStorage data found) ----------
+  function getLink(entry){
+    var links = entry.link || [];
+    for (var i=0;i<links.length;i++){ if (links[i].rel === 'alternate') return links[i].href; }
+    return null;
+  }
+  function bigImg(url){
+    return url
+      .replace(/\/s72-c\//, '/s1024/')
+      .replace(/=s72-c/, '=s1024')
+      .replace(/-h72-p-k-no-nu/, '-h1024-p-k-no-nu');
+  }
+  function parseEntryFull(entry){
+    var raw = (entry.content && entry.content.$t) || (entry.summary && entry.summary.$t) || '';
+    var mPrice = raw.match(/\$price=\{\s*([^}]+)\}/i);
+    var mSale = raw.match(/\$sale=\{\s*([^}]+)\}/i);
+
+    var buyLink = null, images = [], desc = '';
+    try{
+      var doc = new DOMParser().parseFromString(raw, 'text/html');
+      var anchors = doc.querySelectorAll('a');
+      for (var i=0;i<anchors.length;i++){
+        var a = anchors[i];
+        if ((a.textContent||'').indexOf('$price=') !== -1 || (a.textContent||'').indexOf('getProduct') !== -1){
+          buyLink = a.getAttribute('href'); break;
+        }
+      }
+      if (!buyLink){
+        for (var j=0;j<anchors.length;j++){
+          var href = anchors[j].getAttribute('href') || '';
+          if (href && href.indexOf('blogspot.com') === -1 && href.indexOf('blogger.com') === -1){ buyLink = href; break; }
+        }
+      }
+      var imgs = doc.querySelectorAll('img');
+      var seen = {};
+      for (var m=0;m<imgs.length;m++){
+        var src = imgs[m].getAttribute('src');
+        if (src && !seen[src]){ seen[src] = 1; images.push(bigImg(src)); }
+      }
+      var ps = doc.querySelectorAll('p');
+      for (var k=0;k<ps.length;k++){
+        var t = (ps[k].textContent||'').trim();
+        if (t.length > 20){ desc = t; break; }
+      }
+    }catch(e){}
+
+    if (!images.length){
+      var thumb = entry.media$thumbnail && entry.media$thumbnail.url;
+      if (thumb) images.push(bigImg(thumb));
+    }
+
+    var link = getLink(entry);
+    var cats = [];
+    (entry.category||[]).forEach(function(c){ if(c.term) cats.push(c.term); });
+
+    return {
+      id: link || ('bg-' + Math.random().toString(36).slice(2)),
+      title: (entry.title && entry.title.$t) || 'Untitled',
+      images: images,
+      buyLink: buyLink || link,
+      price: mPrice ? mPrice[1].trim() : '',
+      sale: mSale ? mSale[1].trim() : '',
+      category: cats[0] || 'General',
+      description: desc.slice(0,180),
+      date: (entry.published && entry.published.$t) ? entry.published.$t.slice(0,10) : ''
+    };
+  }
+
+  function autoImportFromBlogger(){
+    statusBox.innerHTML = 'Pehli baar setup ho raha hai — Blogger se saare posts import ho rahe hain...';
+    window.__pbsAutoImport = function(data){
+      try{
+        var entries = (data.feed && data.feed.entry) || [];
+        var posts = entries.map(parseEntryFull);
+        if (!posts.length){
+          statusBox.innerHTML = 'Blog se posts nahi mil paaye. Check karein ki blog abhi live/public hai, ya "admin.html" se manually try karein.';
+          return;
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+        downloadJson(posts);
+        initWith(posts, true);
+      }catch(err){
+        statusBox.innerHTML = 'Import mein error aaya. "admin.html" se dobara try karein.';
+      }
+    };
+    var s = document.createElement('script');
+    s.src = BLOG_URL + '/feeds/posts/default?alt=json-in-script&max-results=250&callback=__pbsAutoImport';
+    s.onerror = function(){
+      statusBox.innerHTML = 'Blog se connect nahi ho paaya. "admin.html" kholkar manually import try karein.';
+    };
+    document.body.appendChild(s);
+  }
+
+  function downloadJson(posts){
+    try{
+      var blob = new Blob([JSON.stringify(posts, null, 2)], {type:'application/json'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = 'posts.json';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }catch(e){}
+  }
+
+  function buildPills(){
+    var counts = {};
+    state.all.forEach(function(p){
+      var c = p.category || 'Other';
+      counts[c] = (counts[c]||0)+1;
+    });
+    var cats = Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a]; });
+    document.getElementById('statCats').textContent = cats.length;
+
+    cats.slice(0,14).forEach(function(c){
+      var btn = document.createElement('button');
+      btn.className = 'pill';
+      btn.dataset.cat = c;
+      btn.textContent = c + ' (' + counts[c] + ')';
+      btn.addEventListener('click', function(){ selectCategory(c); });
+      pillRow.appendChild(btn);
+    });
+    pillRow.querySelector('[data-cat="all"]').addEventListener('click', function(){ selectCategory('all'); });
+  }
+
+  function selectCategory(cat){
+    state.activeCat = cat;
+    Array.prototype.forEach.call(pillRow.querySelectorAll('.pill'), function(p){
+      p.classList.toggle('active', p.dataset.cat === cat);
+    });
+    document.getElementById('sectionTitle').textContent = (cat === 'all') ? 'Latest Deals' : cat + ' Deals';
+    applyFilters();
+  }
+
+  function applyFilters(){
+    var q = state.query.trim().toLowerCase();
+    state.filtered = state.all.filter(function(p){
+      var catOk = state.activeCat === 'all' || (p.category||'Other') === state.activeCat;
+      var qOk = !q || (p.title||'').toLowerCase().indexOf(q) !== -1;
+      return catOk && qOk;
+    });
+    state.shown = 0;
+    grid.innerHTML = '';
+    renderMore();
+  }
+
+  // Discounted price + "% Off" se MRP (crossed-out original price) nikalta hai.
+  // Agar post mein khud "mrp" field di gayi ho (admin form se), wahi use hoti hai.
+  function calcMrp(p){
+    if (p.mrp) return p.mrp;
+    var priceNum = parseFloat((p.price||'').replace(/[^\d.]/g,''));
+    var pctMatch = (p.sale||'').match(/(\d+(\.\d+)?)\s*%/);
+    if (!priceNum || !pctMatch) return null;
+    var pct = parseFloat(pctMatch[1]);
+    if (pct <= 0 || pct >= 100) return null;
+    var mrp = priceNum / (1 - pct/100);
+    return '₹' + Math.round(mrp).toLocaleString('en-IN');
+  }
+
+  function sliderHtml(images, title){
+    if (!images || !images.length){
+      return '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2.4rem;">🛍️</div>';
+    }
+    if (images.length === 1){
+      return '<img src="'+images[0]+'" alt="'+escapeHtml(title)+'" loading="lazy">';
+    }
+    var imgs = images.map(function(src){ return '<img src="'+src+'" alt="'+escapeHtml(title)+'" loading="lazy">'; }).join('');
+    var dots = images.map(function(_,i){ return '<span class="'+(i===0?'active':'')+'"></span>'; }).join('');
+    return (
+      '<div class="slider-track">'+imgs+'</div>'+
+      '<button class="slider-arrow prev" data-dir="-1">‹</button>'+
+      '<button class="slider-arrow next" data-dir="1">›</button>'+
+      '<div class="slider-dots">'+dots+'</div>'
+    );
+  }
+
+  function cardHtml(p){
+    var images = p.images || (p.image ? [p.image] : []);
+    var offBadge = p.sale ? '<span class="badge-off">'+escapeHtml(p.sale)+'</span>' : '';
+    var catBadge = p.category ? '<span class="card-cat">'+escapeHtml(p.category)+'</span>' : '';
+    var mrp = calcMrp(p);
+    var priceRow = p.price
+      ? '<div class="card-price-row">'+
+          (mrp ? '<span class="price-mrp">'+escapeHtml(mrp)+'</span>' : '')+
+          '<span class="price-now">'+escapeHtml(p.price)+'</span>'+
+          (p.sale ? '<span class="price-pct">('+escapeHtml(p.sale)+')</span>' : '')+
+        '</div>'
+      : '';
+    var link = p.buyLink || '#';
+    return (
+      '<div class="card">'+
+        '<div class="card-media" data-count="'+images.length+'">'+sliderHtml(images, p.title)+offBadge+catBadge+'</div>'+
+        '<div class="card-body">'+
+          '<a class="card-title" href="'+link+'" target="_blank" rel="noopener nofollow sponsored">'+escapeHtml(p.title)+'</a>'+
+          (p.description ? '<div class="card-desc">'+escapeHtml(p.description)+'</div>' : '')+
+          priceRow+
+          '<div class="card-date">'+formatDate(p.date)+'</div>'+
+          '<a class="card-cta" href="'+link+'" target="_blank" rel="noopener nofollow sponsored">Buy Now →</a>'+
+        '</div>'+
+      '</div>'
+    );
+  }
+
+  // slider prev/next clicks (event delegation — grid par ek hi listener)
+  grid.addEventListener('click', function(e){
+    var btn = e.target.closest('.slider-arrow');
+    if (!btn) return;
+    e.preventDefault();
+    var media = btn.closest('.card-media');
+    var track = media.querySelector('.slider-track');
+    var dots = media.querySelectorAll('.slider-dots span');
+    var count = dots.length;
+    var current = parseInt(media.dataset.idx || '0', 10);
+    var next = (current + parseInt(btn.dataset.dir,10) + count) % count;
+    media.dataset.idx = next;
+    track.style.transform = 'translateX(-' + (next*100) + '%)';
+    dots.forEach(function(d,i){ d.classList.toggle('active', i===next); });
+  });
+
+  function renderMore(){
+    var next = state.filtered.slice(state.shown, state.shown + PAGE_SIZE);
+    next.forEach(function(p){ grid.insertAdjacentHTML('beforeend', cardHtml(p)); });
+    state.shown += next.length;
+
+    resultCount.textContent = state.filtered.length + ' deals mile';
+    grid.style.display = state.filtered.length ? 'grid' : 'none';
+    emptyBox.style.display = state.filtered.length ? 'none' : 'block';
+    loadMoreWrap.style.display = (state.shown < state.filtered.length) ? 'block' : 'none';
+  }
+
+  loadMoreBtn.addEventListener('click', renderMore);
+
+  var searchTimer;
+  searchInput.addEventListener('input', function(e){
+    clearTimeout(searchTimer);
+    var val = e.target.value;
+    searchTimer = setTimeout(function(){ state.query = val; applyFilters(); }, 200);
+  });
+
+  loadPosts();
+})();
+</script>
+
+</body>
+</html>
