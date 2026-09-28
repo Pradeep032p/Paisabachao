@@ -469,7 +469,7 @@
       price: mPrice ? mPrice[1].trim() : '',
       sale: mSale ? mSale[1].trim() : '',
       category: cats[0] || 'General',
-      description: desc.slice(0,180),
+      description: desc.slice(0,600),
       date: (entry.published && entry.published.$t) ? entry.published.$t.slice(0,10) : ''
     };
   }
