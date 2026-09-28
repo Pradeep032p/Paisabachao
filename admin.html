@@ -414,8 +414,15 @@
   }
   function stripTags(html){ return (html||'').replace(/<[^>]*>/g,' '); }
   function cleanPlainText(raw){
-    var t = stripTags(decodeEntities(raw));
-    return t.replace(/\s+/g,' ').trim();
+    var t = decodeEntities(raw||'');
+    t = t.replace(/<br\s*\/?>/gi, '\n')
+         .replace(/<\/(p|div|li|h1|h2|h3|h4|h5|h6)>/gi, '\n')
+         .replace(/<li[^>]*>/gi, '\n• ');
+    t = t.replace(/<[^>]*>/g, ' ');
+    t = t.replace(/[ \t]+/g, ' ');
+    t = t.replace(/ *\n */g, '\n');
+    t = t.replace(/\n{3,}/g, '\n\n');
+    return t.trim();
   }
 
   function parseEntry(entry){
@@ -454,7 +461,9 @@
     var desc = plain
       .replace(/\{getProduct\}/gi, ' ')
       .replace(/\$\w+=\{[^}]{0,60}\}/g, ' ')
-      .replace(/\s+/g,' ')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/ *\n */g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
       .trim();
     if (desc.length < 15) desc = '';
 
@@ -469,7 +478,7 @@
       price: mPrice ? mPrice[1].trim() : '',
       sale: mSale ? mSale[1].trim() : '',
       category: cats[0] || 'General',
-      description: desc.slice(0,600),
+      description: desc.slice(0,4000),
       date: (entry.published && entry.published.$t) ? entry.published.$t.slice(0,10) : ''
     };
   }
