@@ -110,6 +110,7 @@
     <button class="tab active" data-tab="add">➕ Naya Post</button>
     <button class="tab" data-tab="manage">Sabhi Posts</button>
     <button class="tab" data-tab="backup">Backup / Publish</button>
+    <button class="tab" data-tab="settings">⚙ Auto-Publish Setup</button>
   </div>
 
   <!-- ADD (fast bulk posting) -->
@@ -198,8 +199,9 @@
   <!-- BACKUP -->
   <div class="panel" id="panel-backup">
     <h2>Backup &amp; Publish</h2>
+    <div id="autoPublishInfo" class="hint"></div>
     <div class="hint">
-      Posts is browser mein (IndexedDB) save hote hain. Sabhi visitors ko dikhane ke liye <b>posts.json download</b> karke apni hosting par <b>index.html ke saath</b> upload/replace karein. Naye posts add karne ke baad, sabke live hone ke liye ye step dobara karein.
+      Manual backup: posts.json download karke apni hosting par upload kar sakte hain (agar Auto-Publish set up nahi hai, ya extra safety copy chahiye).
     </div>
     <div class="row-actions">
       <button class="btn deal" id="downloadBtn">⬇ posts.json Download Karein</button>
@@ -209,6 +211,48 @@
       </label>
     </div>
     <div id="backupStatus" class="hint"></div>
+  </div>
+
+  <!-- SETTINGS: GitHub auto-publish -->
+  <div class="panel" id="panel-settings">
+    <h2>⚙ Auto-Publish Setup (GitHub Pages)</h2>
+    <div class="hint">
+      Ye ek baar set up karne ke baad, har naya post / edit / delete <b>automatically</b> aapki live website par publish ho jayega — koi manual download-upload nahi karna padega. Ye sirf tab kaam karta hai jab aapki site <b>GitHub Pages</b> par hosted ho.
+    </div>
+    <div class="hint">
+      <b>Kaise set up karein:</b><br>
+      1. GitHub.com par account banayein (free), ek naya <b>public repository</b> banayein aur usmein index.html, admin.html, product.html upload karein.<br>
+      2. Repo Settings → Pages mein jaakar GitHub Pages enable karein — apki site ka URL mil jayega.<br>
+      3. GitHub.com → Settings → Developer Settings → <b>Fine-grained personal access tokens</b> → New token banayein. Repository access mein sirf apna wahi repo select karein, aur Permissions mein <b>"Contents: Read and write"</b> dein.<br>
+      4. Neeche wo details bharein aur "Connection Test Karein" dabayen.
+    </div>
+    <form id="ghForm" class="postform">
+      <div>
+        <label>GitHub Username</label>
+        <input type="text" id="gh_owner" placeholder="e.g. rahul123">
+      </div>
+      <div>
+        <label>Repository Name</label>
+        <input type="text" id="gh_repo" placeholder="e.g. paise-bachao-store">
+      </div>
+      <div>
+        <label>Branch</label>
+        <input type="text" id="gh_branch" placeholder="main" value="main">
+      </div>
+      <div>
+        <label>posts.json ka path</label>
+        <input type="text" id="gh_path" placeholder="posts.json" value="posts.json">
+      </div>
+      <div class="full">
+        <label>Personal Access Token</label>
+        <input type="password" id="gh_token" placeholder="ghp_... ya github_pat_...">
+      </div>
+      <div class="full row-actions">
+        <button type="button" class="btn" id="ghTestBtn">Connection Test Karein &amp; Save</button>
+        <button type="button" class="btn ghost" id="ghDisconnect" style="display:none;">Auto-Publish Band Karein</button>
+      </div>
+    </form>
+    <div id="ghStatus" style="margin-top:12px;font-size:.88rem;font-weight:600;"></div>
   </div>
 </div>
 
@@ -283,6 +327,132 @@
     toast._h = setTimeout(function(){ t.classList.remove('show'); }, 2200);
   }
 
+  // =========================================================
+  // GITHUB AUTO-PUBLISH — posts.json seedha GitHub repo mein
+  // commit karta hai, taaki GitHub Pages khud-ba-khud update ho jaye.
+  // Settings localStorage mein rehti hain (sirf isi browser mein).
+  // =========================================================
+  var GH_KEY = 'pbs_gh_settings';
+  function getGhSettings(){
+    try{ return JSON.parse(localStorage.getItem(GH_KEY) || 'null'); }catch(e){ return null; }
+  }
+  function saveGhSettings(s){ localStorage.setItem(GH_KEY, JSON.stringify(s)); }
+  function clearGhSettings(){ localStorage.removeItem(GH_KEY); }
+
+  function ghApiHeaders(token){
+    return {
+      'Authorization': 'token ' + token,
+      'Accept': 'application/vnd.github+json'
+    };
+  }
+
+  function ghGetFileSha(s){
+    var url = 'https://api.github.com/repos/' + s.owner + '/' + s.repo + '/contents/' + s.path + '?ref=' + s.branch + '&t=' + Date.now();
+    return fetch(url, {headers: ghApiHeaders(s.token)}).then(function(res){
+      if (res.status === 404) return null;
+      if (!res.ok) return res.text().then(function(t){ throw new Error('GitHub error ' + res.status + ': ' + t); });
+      return res.json().then(function(d){ return d.sha; });
+    });
+  }
+
+  function b64EncodeUnicode(str){
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+
+  function publishToGithub(posts){
+    var s = getGhSettings();
+    if (!s) return Promise.resolve(false); // auto-publish set up nahi hai, silently skip
+
+    return ghGetFileSha(s).then(function(sha){
+      var url = 'https://api.github.com/repos/' + s.owner + '/' + s.repo + '/contents/' + s.path;
+      var body = {
+        message: 'Update posts.json via admin panel (' + posts.length + ' posts)',
+        content: b64EncodeUnicode(JSON.stringify(posts, null, 2)),
+        branch: s.branch
+      };
+      if (sha) body.sha = sha;
+      return fetch(url, {
+        method: 'PUT',
+        headers: Object.assign({'Content-Type':'application/json'}, ghApiHeaders(s.token)),
+        body: JSON.stringify(body)
+      });
+    }).then(function(res){
+      if (!res.ok) return res.text().then(function(t){ throw new Error('GitHub error ' + res.status + ': ' + t); });
+      return true;
+    });
+  }
+
+  // Har post add/edit/delete/import ke baad ye call hota hai —
+  // agar GitHub connected hai to automatically publish ho jata hai.
+  function autoPublishIfConnected(){
+    if (!getGhSettings()) return;
+    dbGetAll().then(function(posts){
+      toast('Website par publish ho raha hai...');
+      publishToGithub(posts).then(function(){
+        toast('✅ Live ho gaya! (GitHub Pages ko update hone mein 1-2 min lagte hain)');
+      }).catch(function(err){
+        toast('⚠ Auto-publish fail hua — Settings check karein');
+        console.error(err);
+      });
+    });
+  }
+
+  // ---------- settings tab wiring ----------
+  function refreshGhUi(){
+    var s = getGhSettings();
+    var info = document.getElementById('autoPublishInfo');
+    var testBtn = document.getElementById('ghTestBtn');
+    var disBtn = document.getElementById('ghDisconnect');
+    if (s){
+      info.innerHTML = '✅ <b>Auto-Publish ON</b> — har post automatically <b>' + s.owner + '/' + s.repo + '</b> par live ho raha hai. Manual download ki zaroorat nahi.';
+      document.getElementById('gh_owner').value = s.owner;
+      document.getElementById('gh_repo').value = s.repo;
+      document.getElementById('gh_branch').value = s.branch;
+      document.getElementById('gh_path').value = s.path;
+      disBtn.style.display = 'inline-block';
+    } else {
+      info.innerHTML = 'Auto-Publish set up nahi hai — abhi "posts.json download" karke manually upload karna padega. Neeche "⚙ Auto-Publish Setup" tab se ise ek baar set up kar lein.';
+      disBtn.style.display = 'none';
+    }
+  }
+
+  document.getElementById('ghTestBtn').addEventListener('click', function(){
+    var s = {
+      owner: document.getElementById('gh_owner').value.trim(),
+      repo: document.getElementById('gh_repo').value.trim(),
+      branch: document.getElementById('gh_branch').value.trim() || 'main',
+      path: document.getElementById('gh_path').value.trim() || 'posts.json',
+      token: document.getElementById('gh_token').value.trim()
+    };
+    var statusEl = document.getElementById('ghStatus');
+    if (!s.owner || !s.repo || !s.token){
+      statusEl.style.color = 'var(--deal-deep)';
+      statusEl.textContent = 'Username, Repository aur Token — teeno bharna zaroori hai.';
+      return;
+    }
+    statusEl.style.color = 'var(--ink-soft)';
+    statusEl.textContent = 'Connection test ho raha hai...';
+    ghGetFileSha(s).then(function(){
+      saveGhSettings(s);
+      statusEl.style.color = 'var(--ok)';
+      statusEl.textContent = '✅ Connection safal! Auto-Publish ab ON hai.';
+      refreshGhUi();
+      // turant ek baar publish karke sync kar dete hain
+      autoPublishIfConnected();
+    }).catch(function(err){
+      statusEl.style.color = 'var(--deal-deep)';
+      statusEl.textContent = '❌ Connection fail hua. Username/Repo/Token check karein. (' + err.message + ')';
+    });
+  });
+
+  document.getElementById('ghDisconnect').addEventListener('click', function(){
+    if (!confirm('Auto-Publish band karna hai? Ab manual download-upload karna hoga.')) return;
+    clearGhSettings();
+    document.getElementById('gh_token').value = '';
+    refreshGhUi();
+    toast('Auto-Publish band ho gaya');
+  });
+
   // ---------- tabs ----------
   document.querySelectorAll('.tab').forEach(function(tab){
     tab.addEventListener('click', function(){
@@ -292,6 +462,7 @@
       document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
       if (tab.dataset.tab === 'manage') renderManageList();
       if (tab.dataset.tab === 'add') document.getElementById('f_title').focus();
+      if (tab.dataset.tab === 'backup' || tab.dataset.tab === 'settings') refreshGhUi();
     });
   });
 
@@ -505,6 +676,7 @@
           importStatus.className = 'ok';
           importStatus.textContent = '✓ ' + added + ' naye posts import ho gaye (total ' + merged.length + '). Ab "Backup / Publish" tab se posts.json download karein.';
           refreshStats();
+          autoPublishIfConnected();
         });
       });
     }catch(err){
@@ -573,6 +745,7 @@
       resetForm();
       refreshStats();
       toast('✓ Post publish ho gaya — agla daal sakte hain');
+      autoPublishIfConnected();
     });
   });
 
@@ -600,7 +773,7 @@
 
   function deletePost(id){
     if (!confirm('Ye post delete karna hai?')) return;
-    dbDelete(id).then(function(){ renderManageList(); refreshStats(); toast('Post delete ho gaya'); });
+    dbDelete(id).then(function(){ renderManageList(); refreshStats(); toast('Post delete ho gaya'); autoPublishIfConnected(); });
   }
 
   // ---------- manage list ----------
@@ -677,6 +850,7 @@
             document.getElementById('backupStatus').textContent = '✓ Backup restore/merge ho gaya (' + incoming.length + ' posts processed).';
             renderManageList();
             refreshStats();
+            autoPublishIfConnected();
           });
         });
       }catch(err){
@@ -688,6 +862,7 @@
 
   renderManageList();
   refreshStats();
+  refreshGhUi();
   document.getElementById('f_title').focus();
 })();
 </script>
