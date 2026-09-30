@@ -95,28 +95,28 @@
 <header>
   <div class="wrap header-inner">
     <div class="brand">🔧 Paise Bachao <small>ADMIN</small></div>
-    <a class="view-site" href="index.html" target="_blank">Site Dekhein ↗</a>
+    <a class="view-site" href="index.html" target="_blank"> View Site↗</a>
   </div>
 </header>
 
 <div class="wrap">
   <div class="stat-strip">
     <div class="stat-chip"><b id="statTotalPosts">0</b><span>Total Posts</span></div>
-    <div class="stat-chip"><b id="statToday">0</b><span>Aaj Add Kiye</span></div>
+    <div class="stat-chip"><b id="statToday">0</b><span>Today's Posts</span></div>
   </div>
 
   <div class="tabs">
-    <button class="tab" data-tab="import">Blogger se Import</button>
-    <button class="tab active" data-tab="add">➕ Naya Post</button>
-    <button class="tab" data-tab="manage">Sabhi Posts</button>
+    <button class="tab" data-tab="import">Import From Blogger</button>
+    <button class="tab active" data-tab="add">➕ New Post</button>
+    <button class="tab" data-tab="manage">All Posts</button>
     <button class="tab" data-tab="backup">Backup / Publish</button>
     <button class="tab" data-tab="settings">⚙ Auto-Publish Setup</button>
   </div>
 
   <!-- ADD (fast bulk posting) -->
   <div class="panel active" id="panel-add">
-    <h2 id="addTitle">➕ Naya Post — Fast Entry</h2>
-    <div class="hint">Post save hote hi form apne aap reset ho jayega aur Title field par cursor wapas aa jayega — agla product turant daal sakte hain. Roz ke 10-15 posts ke liye yahi sabse tez tareeka hai.</div>
+    <h2 id="addTitle">➕ New Post — Fast Entry</h2>
+    <div class="hint">Post save hote hi form apne aap reset ho jayega aur Title field par cursor wapas aa jayega — agla product turant daal sakte hain.</div>
 
     <form class="postform" id="postForm">
       <input type="hidden" id="f_id">
@@ -165,12 +165,12 @@
       </div>
 
       <div class="full">
-        <label>Short Description (optional)</label>
+        <label>Description (optional)</label>
         <textarea id="f_desc" placeholder="1-2 line product highlight..."></textarea>
       </div>
 
       <div class="full row-actions">
-        <button type="submit" class="btn deal" id="submitBtn">🚀 Post Publish Karein &amp; Agla Shuru Karein</button>
+        <button type="submit" class="btn deal" id="submitBtn">🚀 Publish &amp; Next Post</button>
         <button type="button" class="btn ghost" id="cancelEdit" style="display:none;">Cancel Edit</button>
       </div>
     </form>
@@ -180,7 +180,7 @@
   <div class="panel" id="panel-import">
     <h2>Blogger se ek click me import karein</h2>
     <div class="hint">
-      Aapke <b>paisebachaostore.blogspot.com</b> blog se saare posts (title, saari images, price, discount, buy link, category) khींच kar is website mein copy kar dega. Blog delete karne se <b>pehle</b> ye step zaroor karein.
+      Aapke <b>paisebachaostore.blogspot.com</b> blog se saare posts (title, saari images, price, discount, buy link, category) ko es website mein copy kar dega.
     </div>
     <button class="btn" id="importBtn">Blogger Se Import Karein</button>
     <div id="importStatus"></div>
@@ -188,7 +188,7 @@
 
   <!-- MANAGE -->
   <div class="panel" id="panel-manage">
-    <h2>Sabhi Posts</h2>
+    <h2>All Posts</h2>
     <div class="topbar">
       <input type="text" class="search2" id="manageSearch" placeholder="Posts mein khojein...">
       <span id="manageCount" class="hint" style="margin:0;"></span>
