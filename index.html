@@ -9,6 +9,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Hind:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- ===== Google Analytics 4 — apna Measurement ID yahan daalein ===== -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX'); // <-- apna GA4 Measurement ID yahan bhi badlein
+</script>
+
 <style>
   :root{
     --ink:#141a2e; --ink-soft:#4a5170; --paper:#eef0f6; --card:#ffffff; --line:#dfe2ec;
@@ -134,13 +144,13 @@
     </div>
   </div>
   <nav class="pill-row" id="pillRow">
-    <button class="pill active" data-cat="all">All Deals</button>
+    <button class="pill active" data-cat="all">Sabhi Deals</button>
   </nav>
 </header>
 
 <div class="trust-strip">
   <div class="trust-inner">
-  
+    <span>🔒 Secure checkout — seedha Amazon par</span>
     <span>✅ Har deal hand-picked &amp; verified</span>
     <span>🚚 Delivery &amp; return Amazon ki policy ke hisaab se</span>
   </div>
@@ -170,7 +180,7 @@
   <div id="emptyBox" class="empty" style="display:none;">Is category/search ke liye koi deal nahi mila.</div>
 
   <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
-    <button class="load-more" id="loadMoreBtn">More Deals</button>
+    <button class="load-more" id="loadMoreBtn">Aur Deals Dikhaye</button>
   </div>
 </main>
 
@@ -179,7 +189,7 @@
     <div class="footer-row">
       <div>
         <div class="footer-brand">Paise Bachao Store</div>
-        <div>Best loot, deals, discount &amp; offers, daily update.</div>
+        <div>Best loot deals &amp; discount offers, curated daily.</div>
       </div>
     </div>
     <div class="disclosure">
@@ -553,7 +563,7 @@
     var link = p.buyLink || '#';
     var detailUrl = 'product.html?id=' + encodeURIComponent(p.id);
     return (
-      '<div class="card">'+
+      '<div class="card" data-id="'+escapeHtml(p.id)+'">'+
         '<a class="card-media" href="'+detailUrl+'" data-count="'+images.length+'">'+sliderHtml(images, p.title)+offBadge+catBadge+'</a>'+
         '<div class="card-body">'+
           '<a class="card-title" href="'+detailUrl+'">'+escapeHtml(p.title)+'</a>'+
@@ -571,18 +581,36 @@
   // clicks on "Buy Now" fall through to the Amazon link — both open normally.
   grid.addEventListener('click', function(e){
     var arrow = e.target.closest('.slider-arrow');
-    if (!arrow) return;
-    e.preventDefault(); e.stopPropagation();
-    var media = arrow.closest('[data-count]');
-    var track = media.querySelector('.slider-track');
-    var dots = media.querySelectorAll('.slider-dots span');
-    var count = dots.length;
-    if (!count) return;
-    var current = parseInt(media.dataset.idx || '0', 10);
-    var next = (current + parseInt(arrow.dataset.dir,10) + count) % count;
-    media.dataset.idx = next;
-    track.style.transform = 'translateX(-' + (next*100) + '%)';
-    dots.forEach(function(d,i){ d.classList.toggle('active', i===next); });
+    if (arrow){
+      e.preventDefault(); e.stopPropagation();
+      var media = arrow.closest('[data-count]');
+      var track = media.querySelector('.slider-track');
+      var dots = media.querySelectorAll('.slider-dots span');
+      var count = dots.length;
+      if (!count) return;
+      var current = parseInt(media.dataset.idx || '0', 10);
+      var next = (current + parseInt(arrow.dataset.dir,10) + count) % count;
+      media.dataset.idx = next;
+      track.style.transform = 'translateX(-' + (next*100) + '%)';
+      dots.forEach(function(d,i){ d.classList.toggle('active', i===next); });
+      return;
+    }
+
+    var buyBtn = e.target.closest('.card-cta');
+    if (buyBtn && window.gtag){
+      var card = buyBtn.closest('.card');
+      var post = card && state.all.find(function(p){ return p.id === card.dataset.id; });
+      if (post){
+        gtag('event', 'buy_now_click', {
+          item_id: post.id,
+          item_name: post.title,
+          item_category: post.category || 'General',
+          value: parseFloat((post.price||'0').replace(/[^\d.]/g,'')) || 0,
+          currency: 'INR'
+        });
+      }
+      // default <a href> navigation Amazon par le jaati hai, rukta nahi
+    }
   });
 
   function renderMore(){

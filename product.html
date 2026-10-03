@@ -3,11 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title id="pageTitle">Product Details — Paisa Bachao Store</title>
+<title id="pageTitle">Product Details — Paise Bachao Store</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%B0%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Hind:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- ===== Google Analytics 4 — apna Measurement ID yahan daalein ===== -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX'); // <-- apna GA4 Measurement ID yahan bhi badlein
+</script>
+
 <style>
   :root{
     --ink:#141a2e; --ink-soft:#4a5170; --paper:#eef0f6; --card:#ffffff; --line:#dfe2ec;
@@ -86,7 +96,7 @@
 <header>
   <div class="header-row">
     <a class="brand" href="index.html">💰 Paise Bachao <small>STORE</small></a>
-    <a class="back-link" href="index.html">← All Deals</a>
+    <a class="back-link" href="index.html">← Sabhi Deals</a>
   </div>
 </header>
 
@@ -98,14 +108,14 @@
 </div>
 
 <main class="wrap">
-  <div id="statusBox" class="status">Loading...</div>
+  <div id="statusBox" class="status">Product load ho raha hai...</div>
   <div id="productBox" style="display:none;"></div>
 </main>
 
 <footer>
   <div class="wrap">
     <div class="footer-brand">Paise Bachao Store</div>
-    <div>Best loots, deals discount &amp; offers, daily updated.</div>
+    <div>Best loot deals &amp; discount offers, curated daily.</div>
     <div class="disclosure">
       Price Disclaimer: Is page par dikhaya gaya price/discount sirf reference ke liye hai — actual price seller, location, stock aur chal rahe offers ke hisaab se alag ho sakta hai. Kripya kharidne se pehle Amazon par jaakar final price zaroor confirm karein.
       <br><br>
@@ -199,14 +209,34 @@
           '<h1 class="p-title">'+escapeHtml(p.title)+'</h1>'+
           (p.date ? '<div class="p-date">'+formatDate(p.date)+'</div>' : '')+
           priceRow+
-          '<a class="buy-btn top" href="'+link+'" target="_blank" rel="noopener nofollow sponsored">Buy Now →</a>'+
+          '<a class="buy-btn top" href="'+link+'" target="_blank" rel="noopener nofollow sponsored">Buy Now — Amazon par kharidein →</a>'+
           (p.description ? '<div class="desc-head">Product Details</div><div class="p-desc">'+escapeHtml(p.description)+'</div>' : '')+
-          '<a class="buy-btn bottom" href="'+link+'" target="_blank" rel="noopener nofollow sponsored">Buy Now →</a>'+
+          '<a class="buy-btn bottom" href="'+link+'" target="_blank" rel="noopener nofollow sponsored">Buy Now — Amazon par kharidein →</a>'+
         '</div>'+
       '</div></div>';
 
     document.getElementById('statusBox').style.display = 'none';
     document.getElementById('productBox').style.display = 'block';
+
+    var priceNum = parseFloat((p.price||'0').replace(/[^\d.]/g,'')) || 0;
+    if (window.gtag){
+      gtag('event', 'view_item', {
+        currency: 'INR',
+        value: priceNum,
+        items: [{ item_id: p.id, item_name: p.title, item_category: p.category || 'General', price: priceNum }]
+      });
+      document.querySelectorAll('.buy-btn').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          gtag('event', 'buy_now_click', {
+            item_id: p.id,
+            item_name: p.title,
+            item_category: p.category || 'General',
+            value: priceNum,
+            currency: 'INR'
+          });
+        });
+      });
+    }
 
     var media = document.querySelector('.media');
     media.addEventListener('click', function(e){
