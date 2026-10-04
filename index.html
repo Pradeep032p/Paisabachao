@@ -8,15 +8,16 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%B0%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://blogger.googleusercontent.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Hind:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <!-- ===== Google Analytics 4 — apna Measurement ID yahan daalein ===== -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-B33TQY5RFH"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){ dataLayer.push(arguments); }
   gtag('js', new Date());
-  gtag('config', 'G-B33TQY5RFH'); // <-- apna GA4 Measurement ID yahan bhi badlein
+  gtag('config', 'G-XXXXXXXXXX'); // <-- apna GA4 Measurement ID yahan bhi badlein
 </script>
 
 <style>
@@ -61,6 +62,8 @@
   main{padding:34px 0 60px;}
   .section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
   .section-head h2{font-size:1.35rem;margin:0;}
+  #backArrow{display:inline-block;margin-right:4px;color:var(--trust);font-weight:800;text-decoration:none;}
+  #backArrow:hover{color:var(--deal);}
   .result-count{font-size:.88rem;color:var(--ink-soft);}
 
   .status{text-align:center;padding:60px 20px;color:var(--ink-soft);}
@@ -170,7 +173,7 @@
 
 <main class="wrap">
   <div class="section-head">
-    <h2 id="sectionTitle">Latest Deals</h2>
+    <h2 id="sectionTitle"><a href="#" id="backArrow" style="display:none;">←</a> <span id="sectionTitleText">Latest Deals</span></h2>
     <span class="result-count" id="resultCount"></span>
   </div>
 
@@ -326,7 +329,7 @@
 
     document.getElementById('statTotal').textContent = posts.length + '+';
     buildPills();
-    applyFilters();
+    applyUrlToState(); // link mein ?cat=/?q= ho to usi view se shuru karo
 
     if (justImported) showSetupBanner(posts.length);
   }
@@ -495,14 +498,52 @@
     pillRow.querySelector('[data-cat="all"]').addEventListener('click', function(){ selectCategory('all'); });
   }
 
-  function selectCategory(cat){
+  function selectCategory(cat, opts){
+    opts = opts || {};
     state.activeCat = cat;
     Array.prototype.forEach.call(pillRow.querySelectorAll('.pill'), function(p){
       p.classList.toggle('active', p.dataset.cat === cat);
     });
-    document.getElementById('sectionTitle').textContent = (cat === 'all') ? 'Latest Deals' : cat + ' Deals';
+    var titleText = (cat === 'all') ? 'Latest Deals' : cat + ' Deals';
+    document.getElementById('sectionTitleText').textContent = titleText;
+    document.title = (cat === 'all' ? 'Paise Bachao Store' : titleText) + ' — Best Offers, Loot Deals & Discounts';
+    document.getElementById('backArrow').style.display = (cat === 'all' && !state.query) ? 'none' : 'inline-block';
+    if (!opts.skipUrl) pushViewState();
     applyFilters();
   }
+
+  // Category/search ko ek real URL (?cat=...&q=...) deta hai — isse browser ka
+  // apna Back/Forward sahi kaam karta hai, link share ho sakta hai, aur ye
+  // ek "nayi page" jaisa hi feel deta hai bina asal mein page reload kiye
+  // (isliye bahut fast rehta hai).
+  function pushViewState(){
+    var params = new URLSearchParams();
+    if (state.activeCat !== 'all') params.set('cat', state.activeCat);
+    if (state.query) params.set('q', state.query);
+    var qs = params.toString();
+    var url = window.location.pathname + (qs ? ('?' + qs) : '');
+    history.pushState({cat: state.activeCat, q: state.query}, '', url);
+  }
+
+  function applyUrlToState(){
+    var params = new URLSearchParams(window.location.search);
+    var cat = params.get('cat') || 'all';
+    var q = params.get('q') || '';
+    searchInput.value = q;
+    state.query = q;
+    selectCategory(cat, {skipUrl: true});
+  }
+
+  document.getElementById('backArrow').addEventListener('click', function(e){
+    e.preventDefault();
+    searchInput.value = '';
+    state.query = '';
+    selectCategory('all');
+  });
+
+  window.addEventListener('popstate', function(){
+    applyUrlToState();
+  });
 
   function applyFilters(){
     var q = state.query.trim().toLowerCase();
@@ -630,7 +671,12 @@
   searchInput.addEventListener('input', function(e){
     clearTimeout(searchTimer);
     var val = e.target.value;
-    searchTimer = setTimeout(function(){ state.query = val; applyFilters(); }, 200);
+    searchTimer = setTimeout(function(){
+      state.query = val;
+      document.getElementById('backArrow').style.display = (state.activeCat === 'all' && !val) ? 'none' : 'inline-block';
+      pushViewState();
+      applyFilters();
+    }, 350);
   });
 
   loadPosts();

@@ -7,15 +7,16 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%B0%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://blogger.googleusercontent.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Hind:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <!-- ===== Google Analytics 4 — apna Measurement ID yahan daalein ===== -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-B33TQY5RFH"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){ dataLayer.push(arguments); }
   gtag('js', new Date());
-  gtag('config', 'G-B33TQY5RFH'); // <-- apna GA4 Measurement ID yahan bhi badlein
+  gtag('config', 'G-XXXXXXXXXX'); // <-- apna GA4 Measurement ID yahan bhi badlein
 </script>
 
 <style>
@@ -96,7 +97,7 @@
 <header>
   <div class="header-row">
     <a class="brand" href="index.html">💰 Paise Bachao <small>STORE</small></a>
-    <a class="back-link" href="index.html">← Sabhi Deals</a>
+    <a class="back-link" href="index.html" id="backLink">← Sabhi Deals</a>
   </div>
 </header>
 
@@ -259,6 +260,15 @@
     document.getElementById('statusBox').innerHTML =
       'Ye product nahi mila. <a href="index.html">← Sabhi deals dekhein</a>';
   }
+
+  document.getElementById('backLink').addEventListener('click', function(e){
+    // Agar pichhle page se aaye hain (same site), to wahi exact view
+    // (category/search) wapas dikhao, index.html par reset na karo.
+    if (document.referrer && document.referrer.indexOf(window.location.origin) === 0 && window.history.length > 1){
+      e.preventDefault();
+      history.back();
+    }
+  });
 
   var id = new URLSearchParams(window.location.search).get('id');
   if (!id){ notFound(); return; }

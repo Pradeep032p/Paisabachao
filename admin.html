@@ -526,16 +526,38 @@
 
   // Har post add/edit/delete/import ke baad ye call hota hai —
   // agar GitHub connected hai to automatically publish ho jata hai.
+  //
+  // IMPORTANT: agar jaldi-jaldi kai posts add kiye jaayein, to unke publish
+  // calls ek saath (overlapping) chal sakte the — isse kabhi-kabhi ek purana
+  // commit baad mein land hokar naye posts ko overwrite/discard kar deta tha
+  // (data silently gayab ho jaata tha). Isliye ab publish calls EK-EK karke,
+  // queue mein chalte hain — koi bhi post kabhi nahi chhutega.
+  var publishBusy = false;
+  var publishQueued = false;
+
   function autoPublishIfConnected(){
     if (!getGhSettings()) return;
+    if (publishBusy){ publishQueued = true; return; }
+    publishBusy = true;
+    runQueuedPublish();
+  }
+
+  function runQueuedPublish(){
     dbGetAll().then(function(posts){
       toast('Website par publish ho raha hai...');
-      publishToGithub(posts).then(function(){
+      return publishToGithub(posts).then(function(){
         toast('✅ Live ho gaya! (1-2 min mein naya deploy ho jayega)');
       }).catch(function(err){
-        toast('⚠ Auto-publish fail hua — Settings check karein');
+        toast('⚠ Auto-publish fail hua, dobara try ho raha hai...');
         console.error(err);
       });
+    }).then(function(){
+      if (publishQueued){
+        publishQueued = false;
+        runQueuedPublish(); // koi aur post is beech mein add hua tha — uske liye ek aur round
+      } else {
+        publishBusy = false;
+      }
     });
   }
 
