@@ -89,6 +89,16 @@
 
   @media(max-width:640px){ form.postform{grid-template-columns:1fr;} }
 
+  .publish-result{margin-top:18px;border-radius:12px;padding:18px 20px;}
+  .publish-result.ok{background:#eafaf1;border:1px solid #bfe8cf;}
+  .publish-result.err{background:#fff0ee;border:1px solid #ffd3cc;}
+  .publish-result .pr-title{font-weight:700;font-size:.98rem;margin-bottom:4px;}
+  .publish-result.ok .pr-title{color:var(--ok);}
+  .publish-result.err .pr-title{color:var(--deal-deep);}
+  .publish-result .pr-sub{font-size:.85rem;color:var(--ink-soft);margin-bottom:14px;}
+  .spin-dot{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;animation:spindot .7s linear infinite;vertical-align:-2px;margin-right:6px;}
+  @keyframes spindot{to{transform:rotate(360deg);}}
+
   .login-gate{position:fixed;inset:0;background:var(--paper);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
   .login-box{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:30px 28px;max-width:380px;width:100%;}
   .login-brand{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:1.3rem;text-align:center;margin-bottom:18px;color:var(--trust);}
@@ -157,7 +167,7 @@
   <!-- ADD (fast bulk posting) -->
   <div class="panel active" id="panel-add">
     <h2 id="addTitle">➕ Naya Post — Fast Entry</h2>
-    <div class="hint">Post save hote hi form apne aap reset ho jayega aur Title field par cursor wapas aa jayega — agla product turant daal sakte hain. Roz ke 10-15 posts ke liye yahi sabse tez tareeka hai.</div>
+    <div class="hint">Publish dabane ke baad system wait karega jab tak post website par safaltapoorvak live na ho jaaye — tabhi "✅ Live ho gaya" confirmation milega. Agla post uske baad "+ Naya Post Add Karein" button se shuru karein.</div>
 
     <form class="postform" id="postForm">
       <input type="hidden" id="f_id">
@@ -211,10 +221,12 @@
       </div>
 
       <div class="full row-actions">
-        <button type="submit" class="btn deal" id="submitBtn">🚀 Post Publish Karein &amp; Agla Shuru Karein</button>
+        <button type="submit" class="btn deal" id="submitBtn">🚀 Post Publish Karein</button>
         <button type="button" class="btn ghost" id="cancelEdit" style="display:none;">Cancel Edit</button>
       </div>
     </form>
+
+    <div id="publishResult" class="publish-result" style="display:none;"></div>
   </div>
 
   <!-- IMPORT -->
@@ -430,16 +442,6 @@
     };
   }
 
-  function ghGetFileSha(s, path){
-    path = path || s.path;
-    var url = 'https://api.github.com/repos/' + s.owner + '/' + s.repo + '/contents/' + path + '?ref=' + s.branch + '&t=' + Date.now();
-    return fetch(url, {headers: ghApiHeaders(s.token)}).then(function(res){
-      if (res.status === 404) return null;
-      if (!res.ok) return res.text().then(function(t){ throw new Error('GitHub error ' + res.status + ': ' + t); });
-      return res.json().then(function(d){ return d.sha; });
-    });
-  }
-
   function b64EncodeUnicode(str){
     return btoa(unescape(encodeURIComponent(str)));
   }
@@ -448,8 +450,27 @@
     return (id || 'img').toString().replace(/[^a-z0-9]/gi, '-').toLowerCase().replace(/-+/g, '-').slice(0, 50);
   }
 
-  function ghJson(url, opts){
-    return fetch(url, opts).then(function(res){
+  // Ek file ko GitHub par likhta hai (naya ya update). "sha" diya ho to usi
+  // version ko update karta hai — agar beech mein file kahin aur se badal gayi
+  // ho (409 conflict), ye saaf error deta hai taaki caller retry kar sake,
+  // kisi ka data chupke se overwrite nahi hota.
+  function ghPutFile(s, path, content, isBase64){
+    var url = 'https://api.github.com/repos/' + s.owner + '/' + s.repo + '/contents/' + path;
+    return fetch(url + '?ref=' + s.branch + '&t=' + Date.now(), {headers: ghApiHeaders(s.token)}).then(function(res){
+      return res.ok ? res.json().then(function(d){ return d.sha; }) : null;
+    }).then(function(sha){
+      var body = {
+        message: 'Update ' + path + ' via admin panel',
+        content: isBase64 ? content : b64EncodeUnicode(content),
+        branch: s.branch
+      };
+      if (sha) body.sha = sha;
+      return fetch(url, {
+        method: 'PUT',
+        headers: Object.assign({'Content-Type':'application/json'}, ghApiHeaders(s.token)),
+        body: JSON.stringify(body)
+      });
+    }).then(function(res){
       if (!res.ok) return res.text().then(function(t){ throw new Error('GitHub error ' + res.status + ': ' + t); });
       return res.json();
     });
@@ -458,19 +479,17 @@
   // Posts ke upload-kiye-hue (base64) images ko GitHub repo mein "images/" folder
   // ke andar ASLI FILES ki tarah store karta hai, aur posts mein sirf unka chhota
   // sa PATH reh jaata hai — isse posts.json bahut halka rehta hai aur site fast
-  // load hoti hai (images alag-alag, zaroorat ke hisaab se load hoti hain).
+  // load hoti hai.
   //
-  // Sab files (naye images + updated posts.json) EK HI GitHub commit mein jaate
-  // hain (Git Data API se), taaki Vercel/Netlify bhi ek hi baar deploy kare,
-  // baar-baar nahi.
+  // Har file (naya image + posts.json) apna alag, simple commit hai — isse
+  // thode zyada deploy trigger ho sakte hain, lekin ye tareeka bahut zyada
+  // reliable hai (koi complex multi-step commit nahi, koi silent data-loss
+  // nahi — koi bhi step fail ho to turant saaf error milta hai).
   function publishToGithub(posts){
     var s = getGhSettings();
     if (!s) return Promise.resolve(false); // auto-publish set up nahi hai, silently skip
 
-    var base = 'https://api.github.com/repos/' + s.owner + '/' + s.repo;
-    var headers = Object.assign({'Content-Type':'application/json'}, ghApiHeaders(s.token));
-
-    var files = []; // { path, content(base64) } — ye saari files is commit mein jaayengi
+    var newImages = []; // { path, content(base64) }
     var migrated = posts.map(function(post){
       var images = (post.images || []).map(function(img, idx){
         if (!img || img.indexOf('data:') !== 0) return img; // pehle se hi hosted path hai, skip
@@ -478,50 +497,23 @@
         if (!m) return img;
         var ext = m[1] === 'jpeg' ? 'jpg' : m[1];
         var path = 'images/' + slugifyId(post.id) + '-' + idx + '.' + ext;
-        files.push({ path: path, content: m[2] });
-        return path; // posts.json mein ab sirf ye chhota path save hoga
+        newImages.push({ path: path, content: m[2] });
+        return path;
       });
       return Object.assign({}, post, { images: images });
     });
-    files.push({ path: s.path, content: b64EncodeUnicode(JSON.stringify(migrated, null, 2)) });
 
-    return ghJson(base + '/git/ref/heads/' + s.branch, {headers: ghApiHeaders(s.token)}).then(function(refData){
-      var latestCommitSha = refData.object.sha;
-      return ghJson(base + '/git/commits/' + latestCommitSha, {headers: ghApiHeaders(s.token)}).then(function(commitData){
-        var baseTreeSha = commitData.tree.sha;
-
-        return Promise.all(files.map(function(f){
-          return ghJson(base + '/git/blobs', {
-            method: 'POST', headers: headers,
-            body: JSON.stringify({ content: f.content, encoding: 'base64' })
-          }).then(function(blob){ return { path: f.path, sha: blob.sha }; });
-        })).then(function(blobs){
-          var treeEntries = blobs.map(function(b){ return { path: b.path, mode: '100644', type: 'blob', sha: b.sha }; });
-          return ghJson(base + '/git/trees', {
-            method: 'POST', headers: headers,
-            body: JSON.stringify({ base_tree: baseTreeSha, tree: treeEntries })
-          });
-        }).then(function(newTree){
-          return ghJson(base + '/git/commits', {
-            method: 'POST', headers: headers,
-            body: JSON.stringify({
-              message: 'Update posts (' + migrated.length + ' posts, ' + (files.length - 1) + ' new images)',
-              tree: newTree.sha,
-              parents: [latestCommitSha]
-            })
-          });
-        }).then(function(newCommit){
-          return ghJson(base + '/git/refs/heads/' + s.branch, {
-            method: 'PATCH', headers: headers,
-            body: JSON.stringify({ sha: newCommit.sha })
-          });
-        });
-      });
-    }).then(function(){
-      // IndexedDB ko bhi halke (path-based) version se update kar do,
-      // taaki agli baar same images dobara upload na ho.
-      return dbBulkPut(migrated).then(function(){ return true; });
+    // pehle images (agar koi nayi hon), ek-ek karke — fir sabse aakhir mein
+    // posts.json, taaki images hamesha posts.json se pehle live ho chuken hon.
+    var chain = Promise.resolve();
+    newImages.forEach(function(f){
+      chain = chain.then(function(){ return ghPutFile(s, f.path, f.content, true); });
     });
+
+    return chain
+      .then(function(){ return ghPutFile(s, s.path, JSON.stringify(migrated, null, 2), false); })
+      .then(function(){ return dbBulkPut(migrated); })
+      .then(function(){ return true; });
   }
 
   // Har post add/edit/delete/import ke baad ye call hota hai —
@@ -532,32 +524,46 @@
   // commit baad mein land hokar naye posts ko overwrite/discard kar deta tha
   // (data silently gayab ho jaata tha). Isliye ab publish calls EK-EK karke,
   // queue mein chalte hain — koi bhi post kabhi nahi chhutega.
+  var publishQueue = [];   // pending {resolve, reject} callbacks
   var publishBusy = false;
-  var publishQueued = false;
 
-  function autoPublishIfConnected(){
-    if (!getGhSettings()) return;
-    if (publishBusy){ publishQueued = true; return; }
-    publishBusy = true;
-    runQueuedPublish();
+  // Har caller apna khud ka result jaan sake (safal/fail), isliye ye ek
+  // Promise deta hai — fire-and-forget nahi. Agar isi waqt koi aur publish
+  // chal raha ho, to request queue mein lag jaati hai aur sabko sahi result
+  // milta hai jab unka turn aata hai. Isse na koi post chhutta hai, na koi
+  // galat "safal" ka toast dikhta hai.
+  function requestPublish(){
+    return new Promise(function(resolve, reject){
+      publishQueue.push({ resolve: resolve, reject: reject });
+      if (!publishBusy) processPublishQueue();
+    });
   }
 
-  function runQueuedPublish(){
+  function processPublishQueue(){
+    if (!publishQueue.length){ publishBusy = false; return; }
+    publishBusy = true;
+    var batch = publishQueue.splice(0); // is round ke saare pending requests ek hi commit mein nipta do
     dbGetAll().then(function(posts){
-      toast('Website par publish ho raha hai...');
-      return publishToGithub(posts).then(function(){
-        toast('✅ Live ho gaya! (1-2 min mein naya deploy ho jayega)');
-      }).catch(function(err){
-        toast('⚠ Auto-publish fail hua, dobara try ho raha hai...');
-        console.error(err);
-      });
+      return publishToGithub(posts);
     }).then(function(){
-      if (publishQueued){
-        publishQueued = false;
-        runQueuedPublish(); // koi aur post is beech mein add hua tha — uske liye ek aur round
-      } else {
-        publishBusy = false;
-      }
+      batch.forEach(function(cb){ cb.resolve(); });
+    }).catch(function(err){
+      batch.forEach(function(cb){ cb.reject(err); });
+    }).then(function(){
+      processPublishQueue(); // is beech koi naya request aaya ho to usko bhi nipta do
+    });
+  }
+
+  // Import / delete / restore jaise background actions ke liye simple
+  // fire-and-forget wrapper (wahan turant UI confirmation zaroori nahi).
+  function autoPublishIfConnected(){
+    if (!getGhSettings()) return;
+    toast('Website par publish ho raha hai...');
+    requestPublish().then(function(){
+      toast('✅ Live ho gaya! (1-2 min mein naya deploy ho jayega)');
+    }).catch(function(err){
+      toast('⚠ Publish fail hua — dobara try karein');
+      console.error(err);
     });
   }
 
@@ -600,24 +606,6 @@
   });
 
   // ---------- Login gate: login / first-time setup ----------
-  function ghPutFileSimple(s, path, textContent){
-    var url = 'https://api.github.com/repos/' + s.owner + '/' + s.repo + '/contents/' + path;
-    return fetch(url, {headers: ghApiHeaders(s.token)}).then(function(res){
-      return res.ok ? res.json().then(function(d){ return d.sha; }) : null;
-    }).then(function(sha){
-      var body = { message: 'Update ' + path + ' via admin panel', content: b64EncodeUnicode(textContent), branch: s.branch };
-      if (sha) body.sha = sha;
-      return fetch(url, {
-        method: 'PUT',
-        headers: Object.assign({'Content-Type':'application/json'}, ghApiHeaders(s.token)),
-        body: JSON.stringify(body)
-      });
-    }).then(function(res){
-      if (!res.ok) return res.text().then(function(t){ throw new Error('GitHub error ' + res.status + ': ' + t); });
-      return res.json();
-    });
-  }
-
   function showAdminPanel(){
     document.getElementById('loginGate').style.display = 'none';
     document.getElementById('mainApp').style.display = 'block';
@@ -961,19 +949,47 @@
 
   document.getElementById('f_date').value = new Date().toISOString().slice(0,10);
 
+  var publishResult = document.getElementById('publishResult');
+
   function resetForm(){
     form.reset();
     document.getElementById('f_id').value = '';
     document.getElementById('f_date').value = new Date().toISOString().slice(0,10);
     addTitle.textContent = '➕ Naya Post — Fast Entry';
-    submitBtn.textContent = '🚀 Post Publish Karein & Agla Shuru Karein';
+    submitBtn.textContent = '🚀 Post Publish Karein';
     cancelEdit.style.display = 'none';
     currentImages = [];
     renderPreview();
+    publishResult.style.display = 'none';
+    form.style.display = 'grid';
     document.getElementById('f_title').focus();
   }
 
   cancelEdit.addEventListener('click', resetForm);
+
+  function showPublishSuccess(title){
+    form.style.display = 'none';
+    publishResult.className = 'publish-result ok';
+    publishResult.innerHTML =
+      '<div class="pr-title">✅ "' + title + '" live ho gaya!</div>' +
+      '<div class="pr-sub">Post GitHub par publish ho chuka hai. Website par 1-2 minute mein (Vercel deploy hone ke baad) dikhega.</div>' +
+      '<button type="button" class="btn deal" id="nextPostBtn">+ Naya Post Add Karein</button>';
+    publishResult.style.display = 'block';
+    document.getElementById('nextPostBtn').addEventListener('click', resetForm);
+  }
+
+  function showPublishError(err, retryFn){
+    publishResult.className = 'publish-result err';
+    publishResult.innerHTML =
+      '<div class="pr-title">❌ Publish fail hua</div>' +
+      '<div class="pr-sub">Post is browser mein save ho gaya hai (data safe hai), lekin website par live nahi ho paaya. Wajah: ' + (err && err.message ? err.message : 'connection error') + '</div>' +
+      '<button type="button" class="btn deal" id="retryPublishBtn">🔁 Dobara Try Karein</button>';
+    publishResult.style.display = 'block';
+    document.getElementById('retryPublishBtn').addEventListener('click', function(){
+      publishResult.innerHTML = '<div class="pr-title"><span class="spin-dot"></span>Dobara try ho raha hai...</div>';
+      retryFn();
+    });
+  }
 
   form.addEventListener('submit', function(e){
     e.preventDefault();
@@ -997,11 +1013,33 @@
       date: document.getElementById('f_date').value || new Date().toISOString().slice(0,10),
       description: document.getElementById('f_desc').value.trim()
     };
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spin-dot"></span>Publish ho raha hai...';
+
+    function attemptPublish(){
+      requestPublish().then(function(){
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '🚀 Post Publish Karein';
+        showPublishSuccess(post.title);
+      }).catch(function(err){
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '🚀 Post Publish Karein';
+        showPublishError(err, attemptPublish);
+      });
+    }
+
     dbPut(post).then(function(){
-      resetForm();
       refreshStats();
-      toast('✓ Post publish ho gaya — agla daal sakte hain');
-      autoPublishIfConnected();
+      if (!getGhSettings()){
+        // Auto-publish set up nahi hai is device par — sirf local save karo.
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '🚀 Post Publish Karein';
+        resetForm();
+        toast('✓ Post save ho gaya (is device par). Pehle "🔒 Security" se login karein taaki ye live ho sake.');
+        return;
+      }
+      attemptPublish();
     });
   });
 
