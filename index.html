@@ -65,12 +65,13 @@
   #backArrow{display:inline-block;margin-right:4px;color:var(--trust);font-weight:800;text-decoration:none;}
   #backArrow:hover{color:var(--deal);}
   .result-count{font-size:.88rem;color:var(--ink-soft);}
+  .sort-select{font-size:.82rem;font-weight:600;color:var(--ink);border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 10px;cursor:pointer;}
 
   .status{text-align:center;padding:60px 20px;color:var(--ink-soft);}
   .status button{margin-top:14px;background:var(--trust);color:#fff;border:0;padding:10px 22px;border-radius:999px;font-weight:600;cursor:pointer;font-size:.9rem;}
   .status a.btn2{display:inline-block;margin-top:14px;margin-left:8px;background:var(--deal);color:#fff;padding:10px 22px;border-radius:999px;font-weight:600;font-size:.9rem;}
 
-  .grid{display:grid;gap:20px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));}
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(206px,1fr));}
   .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;border:1px solid var(--line);transition:transform .18s ease,box-shadow .18s ease;position:relative;}
   .card:hover{transform:translateY(-4px);box-shadow:0 20px 34px -16px rgba(20,26,46,.42);}
   .card:hover .slider-track img{transform:scale(1.045);}
@@ -87,6 +88,9 @@
 
   .badge-off{position:absolute;top:10px;left:0;background:var(--deal);color:#fff;font-weight:700;font-size:.78rem;padding:5px 12px 5px 10px;border-radius:0 6px 6px 0;box-shadow:0 3px 8px -2px rgba(217,46,31,.5);z-index:2;}
   .card-cat{position:absolute;bottom:10px;left:10px;background:rgba(20,26,46,.7);color:#fff;font-size:.68rem;font-weight:600;padding:3px 10px;border-radius:999px;z-index:2;}
+  .wish-btn{position:absolute;top:10px;right:10px;z-index:3;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.92);border:0;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px -2px rgba(0,0,0,.3);font-size:.95rem;color:#c6c9d6;transition:transform .12s ease;}
+  .wish-btn:hover{transform:scale(1.1);}
+  .wish-btn.active{color:var(--deal);}
   .card-body{padding:14px 14px 16px;display:flex;flex-direction:column;gap:8px;flex:1;}
   .card-title{font-size:.93rem;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em;}
   a.card-title:hover,a.card-media:hover{opacity:.94;}
@@ -98,9 +102,9 @@
   .price-note{font-size:.66rem;color:var(--ink-soft);opacity:.85;line-height:1.4;}
   .card-desc{font-size:.78rem;color:var(--ink-soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2em;}
   .card-price-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
-  .price-mrp{font-size:.82rem;color:var(--ink-soft);text-decoration:line-through;}
-  .price-now{font-size:1.18rem;font-weight:700;color:var(--ok);}
-  .price-pct{font-size:.74rem;font-weight:700;color:var(--deal-deep);}
+  .price-mrp{font-size:.8rem;color:var(--ink-soft);text-decoration:line-through;}
+  .price-now{font-size:1.2rem;font-weight:800;color:var(--ink);}
+  .price-pct{font-size:.8rem;font-weight:700;color:var(--ok);}
   .card-cta{margin-top:auto;background:var(--deal);color:#fff;text-align:center;padding:10px;border-radius:9px;font-weight:700;font-size:.88rem;transition:background .15s ease;}
   .card-cta:hover{background:var(--deal-deep);}
   .card-date{font-size:.7rem;color:var(--ink-soft);}
@@ -174,7 +178,15 @@
 <main class="wrap">
   <div class="section-head">
     <h2 id="sectionTitle"><a href="#" id="backArrow" style="display:none;">←</a> <span id="sectionTitleText">Latest Deals</span></h2>
-    <span class="result-count" id="resultCount"></span>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="result-count" id="resultCount"></span>
+      <select id="sortSelect" class="sort-select">
+        <option value="newest">Sort: Newest</option>
+        <option value="price_low">Price: Low to High</option>
+        <option value="price_high">Price: High to Low</option>
+        <option value="discount">Highest Discount</option>
+      </select>
+    </div>
   </div>
 
   <div id="setupBanner" class="setup-banner" style="display:none;"></div>
@@ -277,7 +289,9 @@
     }
   ];
 
-  var state = { all:[], filtered:[], shown:0, activeCat:'all', query:'' };
+  var state = { all:[], filtered:[], shown:0, activeCat:'all', query:'', sort:'newest' };
+  function priceNumOf(p){ return parseFloat((p.price||'0').replace(/[^\d.]/g,'')) || 0; }
+  function discountPctOf(p){ var m = (p.sale||'').match(/(\d+(\.\d+)?)\s*%/); return m ? parseFloat(m[1]) : 0; }
 
   var grid = document.getElementById('grid');
   var statusBox = document.getElementById('statusBox');
@@ -287,6 +301,19 @@
   var pillRow = document.getElementById('pillRow');
   var resultCount = document.getElementById('resultCount');
   var searchInput = document.getElementById('searchInput');
+
+  var WISH_KEY = 'pbs_wishlist';
+  function getWishlist(){
+    try{ return JSON.parse(localStorage.getItem(WISH_KEY) || '[]'); }catch(e){ return []; }
+  }
+  function isWished(id){ return getWishlist().indexOf(id) !== -1; }
+  function toggleWish(id){
+    var list = getWishlist();
+    var idx = list.indexOf(id);
+    if (idx === -1) list.push(id); else list.splice(idx, 1);
+    localStorage.setItem(WISH_KEY, JSON.stringify(list));
+    return idx === -1; // true = ab wishlist mein hai
+  }
 
   function escapeHtml(s){
     return (s||"").replace(/[&<>"']/g, function(c){
@@ -496,6 +523,13 @@
       pillRow.appendChild(btn);
     });
     pillRow.querySelector('[data-cat="all"]').addEventListener('click', function(){ selectCategory('all'); });
+
+    var wishBtn = document.createElement('button');
+    wishBtn.className = 'pill';
+    wishBtn.dataset.cat = '__wishlist__';
+    wishBtn.textContent = '❤ Wishlist';
+    wishBtn.addEventListener('click', function(){ selectCategory('__wishlist__'); });
+    pillRow.insertBefore(wishBtn, pillRow.children[1]); // "Sabhi Deals" ke turant baad
   }
 
   function selectCategory(cat, opts){
@@ -504,7 +538,7 @@
     Array.prototype.forEach.call(pillRow.querySelectorAll('.pill'), function(p){
       p.classList.toggle('active', p.dataset.cat === cat);
     });
-    var titleText = (cat === 'all') ? 'Latest Deals' : cat + ' Deals';
+    var titleText = (cat === 'all') ? 'Latest Deals' : (cat === '__wishlist__' ? '❤ Aapki Wishlist' : cat + ' Deals');
     document.getElementById('sectionTitleText').textContent = titleText;
     document.title = (cat === 'all' ? 'Paise Bachao Store' : titleText) + ' — Best Offers, Loot Deals & Discounts';
     document.getElementById('backArrow').style.display = (cat === 'all' && !state.query) ? 'none' : 'inline-block';
@@ -547,15 +581,28 @@
 
   function applyFilters(){
     var q = state.query.trim().toLowerCase();
+    var wish = getWishlist();
     state.filtered = state.all.filter(function(p){
-      var catOk = state.activeCat === 'all' || (p.category||'Other') === state.activeCat;
+      var catOk = state.activeCat === 'all'
+        || (state.activeCat === '__wishlist__' ? wish.indexOf(p.id) !== -1 : (p.category||'Other') === state.activeCat);
       var qOk = !q || (p.title||'').toLowerCase().indexOf(q) !== -1;
       return catOk && qOk;
     });
+
+    if (state.sort === 'price_low') state.filtered.sort(function(a,b){ return priceNumOf(a) - priceNumOf(b); });
+    else if (state.sort === 'price_high') state.filtered.sort(function(a,b){ return priceNumOf(b) - priceNumOf(a); });
+    else if (state.sort === 'discount') state.filtered.sort(function(a,b){ return discountPctOf(b) - discountPctOf(a); });
+    // 'newest' ke liye kuch nahi karna — state.all pehle se hi date-desc sorted hai
+
     state.shown = 0;
     grid.innerHTML = '';
     renderMore();
   }
+
+  document.getElementById('sortSelect').addEventListener('change', function(e){
+    state.sort = e.target.value;
+    applyFilters();
+  });
 
   // Discounted price + "% Off" se MRP (crossed-out original price) nikalta hai.
   // Agar post mein khud "mrp" field di gayi ho (admin form se), wahi use hoti hai.
@@ -603,9 +650,12 @@
       : '';
     var link = p.buyLink || '#';
     var detailUrl = 'product.html?id=' + encodeURIComponent(p.id);
+    var wished = isWished(p.id);
+    var wishBtn = '<button type="button" class="wish-btn'+(wished?' active':'')+'" data-wish="'+escapeHtml(p.id)+'" aria-label="Wishlist">'+(wished?'♥':'♡')+'</button>';
     return (
       '<div class="card" data-id="'+escapeHtml(p.id)+'">'+
         '<a class="card-media" href="'+detailUrl+'" data-count="'+images.length+'">'+sliderHtml(images, p.title)+offBadge+catBadge+'</a>'+
+        wishBtn+
         '<div class="card-body">'+
           '<a class="card-title" href="'+detailUrl+'">'+escapeHtml(p.title)+'</a>'+
           (p.description ? '<div class="card-desc">'+escapeHtml(p.description)+'</div>' : '')+
@@ -621,6 +671,16 @@
   // fall through to their normal <a href="product.html?..."> navigation;
   // clicks on "Buy Now" fall through to the Amazon link — both open normally.
   grid.addEventListener('click', function(e){
+    var wishBtn = e.target.closest('.wish-btn');
+    if (wishBtn){
+      e.preventDefault(); e.stopPropagation();
+      var nowWished = toggleWish(wishBtn.dataset.wish);
+      wishBtn.classList.toggle('active', nowWished);
+      wishBtn.textContent = nowWished ? '♥' : '♡';
+      if (state.activeCat === '__wishlist__') applyFilters(); // wishlist view se hatao turant
+      return;
+    }
+
     var arrow = e.target.closest('.slider-arrow');
     if (arrow){
       e.preventDefault(); e.stopPropagation();

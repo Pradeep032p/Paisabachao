@@ -69,8 +69,13 @@
 
   .price-row{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px;}
   .price-mrp{font-size:1.05rem;color:var(--ink-soft);text-decoration:line-through;}
-  .price-now{font-size:1.9rem;font-weight:800;color:var(--ok);}
-  .price-pct{font-size:.9rem;font-weight:700;color:var(--deal-deep);}
+  .price-now{font-size:1.9rem;font-weight:800;color:var(--ink);}
+  .price-pct{font-size:.9rem;font-weight:700;color:var(--ok);}
+  .breadcrumb{font-size:.8rem;color:var(--ink-soft);margin-bottom:14px;}
+  .breadcrumb a{color:var(--trust);text-decoration:none;}
+  .breadcrumb a:hover{text-decoration:underline;}
+  .wish-btn-lg{position:absolute;top:14px;right:14px;z-index:3;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.95);border:0;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px -2px rgba(0,0,0,.3);font-size:1.2rem;color:#c6c9d6;}
+  .wish-btn-lg.active{color:var(--deal);}
   .price-note{font-size:.74rem;color:var(--ink-soft);opacity:.9;margin-bottom:18px;line-height:1.5;}
 
   .buy-btn{display:block;text-align:center;background:var(--deal);color:#fff;padding:16px;border-radius:12px;font-weight:700;font-size:1.05rem;box-shadow:0 10px 22px -10px rgba(217,46,31,.55);transition:background .15s ease;}
@@ -147,6 +152,19 @@
     });
   }
 
+  var WISH_KEY = 'pbs_wishlist';
+  function getWishlist(){
+    try{ return JSON.parse(localStorage.getItem(WISH_KEY) || '[]'); }catch(e){ return []; }
+  }
+  function isWished(id){ return getWishlist().indexOf(id) !== -1; }
+  function toggleWish(id){
+    var list = getWishlist();
+    var idx = list.indexOf(id);
+    if (idx === -1) list.push(id); else list.splice(idx, 1);
+    localStorage.setItem(WISH_KEY, JSON.stringify(list));
+    return idx === -1;
+  }
+
   function escapeHtml(s){
     return (s||"").replace(/[&<>"']/g, function(c){
       return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
@@ -201,10 +219,18 @@
         '<div class="price-note">*Price seller, location, stock aur offers ke hisaab se badal sakti hai. Final price Amazon par confirm karein.</div>'
       : '';
 
+    var wished = isWished(p.id);
+    var wishBtn = '<button type="button" class="wish-btn-lg'+(wished?' active':'')+'" id="wishBtnLg">'+(wished?'♥':'♡')+'</button>';
+    var catUrl = p.category ? 'index.html?cat=' + encodeURIComponent(p.category) : null;
+    var breadcrumb = '<div class="breadcrumb"><a href="index.html">Home</a> / ' +
+      (catUrl ? '<a href="'+catUrl+'">'+escapeHtml(p.category)+'</a>' : 'Deal') +
+      ' / <span>'+escapeHtml((p.title||'').slice(0,40))+(p.title && p.title.length>40 ? '…' : '')+'</span></div>';
+
     document.getElementById('pageTitle').textContent = p.title + ' — Paise Bachao Store';
     document.getElementById('productBox').innerHTML =
+      breadcrumb +
       '<div class="product-box"><div class="product-grid">'+
-        '<div class="media" data-count="'+images.length+'">'+sliderHtml(images, p.title)+offBadge+'</div>'+
+        '<div class="media" data-count="'+images.length+'">'+sliderHtml(images, p.title)+offBadge+wishBtn+'</div>'+
         '<div class="info">'+
           (p.category ? '<span class="cat-badge">'+escapeHtml(p.category)+'</span>' : '')+
           '<h1 class="p-title">'+escapeHtml(p.title)+'</h1>'+
@@ -238,6 +264,12 @@
         });
       });
     }
+
+    document.getElementById('wishBtnLg').addEventListener('click', function(){
+      var nowWished = toggleWish(p.id);
+      this.classList.toggle('active', nowWished);
+      this.textContent = nowWished ? '♥' : '♡';
+    });
 
     var media = document.querySelector('.media');
     media.addEventListener('click', function(e){
