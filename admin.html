@@ -539,11 +539,34 @@
     });
   }
 
+  // GitHub par jo asal mein live hai, usse is device ki IndexedDB mein
+  // merge/sync kar deta hai (local-only posts delete nahi hote, bas remote
+  // wale add/update ho jaate hain). Isse koi bhi device — chahe uski local
+  // copy kitni bhi purani kyun na ho — publish karte waqt doosre devices
+  // ke posts ko kabhi overwrite nahi karega.
+  function syncFromRemote(){
+    var url = 'https://raw.githubusercontent.com/' + GH_DEFAULTS.owner + '/' + GH_DEFAULTS.repo + '/' + GH_DEFAULTS.branch + '/' + GH_DEFAULTS.path + '?t=' + Date.now();
+    return fetch(url).then(function(res){
+      if (!res.ok) return; // abhi tak posts.json bana hi nahi, koi baat nahi
+      return res.json();
+    }).then(function(remotePosts){
+      if (!remotePosts || !remotePosts.length) return;
+      return dbGetAll().then(function(local){
+        var byId = {};
+        local.forEach(function(p){ byId[p.id] = p; });
+        remotePosts.forEach(function(p){ byId[p.id] = p; }); // remote hamesha "sach" maana jaata hai
+        return dbBulkPut(Object.keys(byId).map(function(k){ return byId[k]; }));
+      });
+    }).catch(function(){ /* network issue — purani local copy se hi kaam chala lo */ });
+  }
+
   function processPublishQueue(){
     if (!publishQueue.length){ publishBusy = false; return; }
     publishBusy = true;
     var batch = publishQueue.splice(0); // is round ke saare pending requests ek hi commit mein nipta do
-    dbGetAll().then(function(posts){
+    syncFromRemote().then(function(){
+      return dbGetAll();
+    }).then(function(posts){
       return publishToGithub(posts);
     }).then(function(){
       batch.forEach(function(cb){ cb.resolve(); });
@@ -612,6 +635,12 @@
     refreshGhUi();
     renderManageList();
     refreshStats();
+    toast('Latest data sync ho raha hai...');
+    syncFromRemote().then(function(){
+      renderManageList();
+      refreshStats();
+      toast('✅ Sync ho gaya — ab tak ke saare posts yahan hain');
+    });
   }
   function showLoginGate(){
     document.getElementById('loginGate').style.display = 'flex';
