@@ -226,6 +226,25 @@
   // =========================================================
   var BLOG_URL   = 'https://paisebachaostore.blogspot.com'; // aapka Blogger blog (import ke liye)
   var PAGE_SIZE  = 12;     // ek baar mein kitne cards dikhein
+  var AMAZON_TAG = 'yourtag-21'; // <-- apna Amazon Associates Tracking ID yahan daalein (jaise rahul0a-21)
+
+  // Har Amazon link mein automatically AMAZON_TAG jod deta hai (jo pehle se
+  // hai use overwrite karke) — taaki saare clicks/orders ek hi tracking ID
+  // ke through Amazon Associates dashboard mein dikhein. Shortened links
+  // (amzn.to, link.amazon jaise redirect shorteners) ko nahi chheda jaata
+  // kyunki unka asli tag humein control nahi karne diya ja sakta — un links
+  // ke liye best practice ye hai ki post banate waqt seedha amazon.in/.com
+  // ka pura product link use karein, shortened link nahi.
+  function withAffiliateTag(url){
+    try{
+      var u = new URL(url, window.location.href);
+      if (u.hostname.toLowerCase().indexOf('amazon.') !== -1){
+        u.searchParams.set('tag', AMAZON_TAG);
+        return u.toString();
+      }
+    }catch(e){}
+    return url;
+  }
 
   // IndexedDB helper (admin.html jaisa hi) — taaki dono files ka data ek jagah rahe
   var DB_NAME = 'pbs_db', DB_VERSION = 1, STORE = 'posts';
@@ -648,7 +667,7 @@
         '</div>'+
         '<div class="price-note">*Price seller/location/offer ke hisaab se alag ho sakti hai</div>'
       : '';
-    var link = p.buyLink || '#';
+    var link = withAffiliateTag(p.buyLink || '#');
     var detailUrl = 'product.html?id=' + encodeURIComponent(p.id);
     var wished = isWished(p.id);
     var wishBtn = '<button type="button" class="wish-btn'+(wished?' active':'')+'" data-wish="'+escapeHtml(p.id)+'" aria-label="Wishlist">'+(wished?'♥':'♡')+'</button>';

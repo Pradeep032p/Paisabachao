@@ -165,6 +165,19 @@
     return idx === -1;
   }
 
+  var AMAZON_TAG = 'yourtag-21'; // <-- apna Amazon Associates Tracking ID yahan bhi daalein (index.html jaisa hi)
+
+  function withAffiliateTag(url){
+    try{
+      var u = new URL(url, window.location.href);
+      if (u.hostname.toLowerCase().indexOf('amazon.') !== -1){
+        u.searchParams.set('tag', AMAZON_TAG);
+        return u.toString();
+      }
+    }catch(e){}
+    return url;
+  }
+
   function escapeHtml(s){
     return (s||"").replace(/[&<>"']/g, function(c){
       return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
@@ -208,7 +221,7 @@
   function render(p){
     var images = p.images || (p.image ? [p.image] : []);
     var mrp = calcMrp(p);
-    var link = p.buyLink || '#';
+    var link = withAffiliateTag(p.buyLink || '#');
     var offBadge = p.sale ? '<span class="badge-off">'+escapeHtml(p.sale)+'</span>' : '';
     var priceRow = p.price
       ? '<div class="price-row">'+
